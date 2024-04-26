@@ -5,7 +5,7 @@ import (
 	"github.com/Cynthia/goblog/pkg/route"
 )
 
-// Category 文章分类
+
 type Category struct {
     models.BaseModel
 

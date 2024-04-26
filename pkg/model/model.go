@@ -15,12 +15,9 @@ import (
 // DB gorm.DB 对象
 var DB *gorm.DB
 
-// ConnectDB 初始化模型
 func ConnectDB() *gorm.DB {
 
-	var err error
-
-    // 初始化 MySQL 连接信息
+	var err error  
     gormConfig := mysql.New(mysql.Config{
         DSN: fmt.Sprintf("%v:%v@tcp(%v:%v)/%v?charset=%v&parseTime=True&loc=Local",
             config.GetString("database.mysql.username"),

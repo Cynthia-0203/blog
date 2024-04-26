@@ -7,7 +7,7 @@ import (
 	"github.com/Cynthia/goblog/pkg/route"
 )
 
-// Article 文章模型
+
 type Article struct {
     models.BaseModel
 	UserID uint64 `gorm:"not null;index"`

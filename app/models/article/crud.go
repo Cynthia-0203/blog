@@ -25,7 +25,7 @@ func Get(idstr string) (Article, error) {
 // GetAll 获取全部文章
 func GetAll(r *http.Request, perPage int) ([]Article, pagination.ViewData, error) {
 
-    // 1. 初始化分页实例
+    
     db := model.DB.Model(Article{}).Order("created_at desc")
     _pager := pagination.New(r, db, route.Name2URL("home"), perPage)
 

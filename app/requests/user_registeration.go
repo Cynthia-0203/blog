@@ -1,52 +1,26 @@
 package requests
 
 import (
-	"errors"
-	"fmt"
-	"strings"
+	// "errors"
+	// "fmt"
+	// "strings"
 
 	"github.com/Cynthia/goblog/app/models/user"
-	"github.com/Cynthia/goblog/pkg/model"
+	// "github.com/Cynthia/goblog/pkg/model"
 
 	"github.com/thedevsaddam/govalidator"
 )
 
-// 此方法会在初始化时执行
-func init() {
-    // not_exists:users,email
-    govalidator.AddCustomRule("not_exists", func(field string, rule string, message string, value interface{}) error {
-        rng := strings.Split(strings.TrimPrefix(rule, "not_exists:"), ",")
-
-        tableName := rng[0]
-        dbFiled := rng[1]
-        val := value.(string)
-
-        var count int64
-        model.DB.Table(tableName).Where(dbFiled+" = ?", val).Count(&count)
-
-        if count != 0 {
-
-            if message != "" {
-                return errors.New(message)
-            }
-
-            return fmt.Errorf("%v 已被占用", val)
-        }
-        return nil
-    })
-}
-// ValidateRegistrationForm 验证表单，返回 errs 长度等于零即通过
 func ValidateRegistrationForm(data user.User) map[string][]string {
 
-    // 1. 定制认证规则
-     // 1. 定制认证规则
+  
 	rules := govalidator.MapData{
     	"name":             []string{"required", "alpha_num", "between:3,20", "not_exists:users,name"},
         "email":            []string{"required", "min:4", "max:30", "email", "not_exists:users,email"},
 		"password":         []string{"required", "min:6"},
         "password_confirm": []string{"required"},
 	}
-    // 2. 定制错误消息
+  
     messages := govalidator.MapData{
         "name": []string{
             "required:用户名为必填项",
@@ -68,18 +42,18 @@ func ValidateRegistrationForm(data user.User) map[string][]string {
         },
     }
 
-    // 3. 配置初始化
+
     opts := govalidator.Options{
         Data:          &data,
         Rules:         rules,
-        TagIdentifier: "valid", // 模型中的 Struct 标签标识符
+        TagIdentifier: "valid", 
         Messages:      messages,
     }
 
-    // 4. 开始验证
+
     errs := govalidator.New(opts).ValidateStruct()
 
-    // 5. 因 govalidator 不支持 password_confirm 验证，我们自己写一个
+    
     if data.Password != data.PasswordConfirm {
         errs["password_confirm"] = append(errs["password_confirm"], "两次输入密码不匹配！")
     }

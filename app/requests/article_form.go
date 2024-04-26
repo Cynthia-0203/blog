@@ -5,16 +5,16 @@ import (
 	"github.com/thedevsaddam/govalidator"
 )
 
-// ValidateArticleForm 验证表单，返回 errs 长度等于零即通过
+
 func ValidateArticleForm(data article.Article) map[string][]string {
 
-    // 1. 定制认证规则
+
     rules := govalidator.MapData{
         "title": []string{"required", "min:3", "max:40"},
         "body":  []string{"required", "min:10"},
     }
 
-    // 2. 定制错误消息
+   
     messages := govalidator.MapData{
         "title": []string{
             "required:标题为必填项",
@@ -27,14 +27,14 @@ func ValidateArticleForm(data article.Article) map[string][]string {
         },
     }
 
-    // 3. 配置初始化
+
     opts := govalidator.Options{
         Data:          &data,
         Rules:         rules,
-        TagIdentifier: "valid", // 模型中的 Struct 标签标识符
+        TagIdentifier: "valid", 
         Messages:      messages,
     }
 
-    // 4. 开始验证
+
     return govalidator.New(opts).ValidateStruct()
 }
