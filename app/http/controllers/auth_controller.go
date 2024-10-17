@@ -1,14 +1,15 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/Cynthia/goblog/app/models/user"
 	"github.com/Cynthia/goblog/app/requests"
 	"github.com/Cynthia/goblog/pkg/auth"
 	"github.com/Cynthia/goblog/pkg/flash"
+	"github.com/Cynthia/goblog/pkg/route"
 	"github.com/Cynthia/goblog/pkg/view"
+	"github.com/gin-gonic/gin"
 )
 
 
@@ -24,25 +25,25 @@ type AuthController struct {
 
 
 
-func (*AuthController) Register(w http.ResponseWriter, r *http.Request) {
-    view.RenderSimple(w, view.D{}, "auth.register")
+func (*AuthController) Register(c *gin.Context) {
+    view.RenderSimple(c, view.D{}, "auth.register")
 }
 
 
-func (*AuthController) DoRegister(w http.ResponseWriter, r *http.Request) {
+func (*AuthController) DoRegister(c *gin.Context) {
 
     _user := user.User{
-        Name:            r.PostFormValue("name"),
-        Email:           r.PostFormValue("email"),
-        Password:        r.PostFormValue("password"),
-        PasswordConfirm: r.PostFormValue("password_confirm"),
+        Name:            c.PostForm("name"),
+        Email:           c.PostForm("email"),
+        Password:        c.PostForm("password"),
+        PasswordConfirm: c.PostForm("password_confirm"),
     }
 
 
     errs := requests.ValidateRegistrationForm(_user)
 
     if len(errs) > 0 {
-        view.RenderSimple(w, view.D{
+        view.RenderSimple(c, view.D{
             "Errors": errs,
             "User":   _user,
         }, "auth.register")
@@ -50,31 +51,32 @@ func (*AuthController) DoRegister(w http.ResponseWriter, r *http.Request) {
         _user.Create()
 
         if _user.ID > 0 {
-			flash.Success("registered successfully...")
-			auth.Login(_user)
-            http.Redirect(w, r, "/", http.StatusFound)
+			flash.Success(c,"registered successfully...")
+			auth.Login(c,_user)
+            index:=route.Name2URL("articles.show", "id", _user.GetStringID())
+            c.Redirect(http.StatusFound, index)
         } else {
-            w.WriteHeader(http.StatusInternalServerError)
-            fmt.Fprint(w, "falied to register...")
+            c.Writer.WriteHeader(http.StatusInternalServerError)
+            c.String(http.StatusInternalServerError, "failed to register...")  
         }
     }
 }
 
-func (*AuthController) Login(w http.ResponseWriter, r *http.Request) {
-    view.RenderSimple(w, view.D{}, "auth.login")
+func (*AuthController) Login(c *gin.Context) {
+    view.RenderSimple(c, view.D{}, "auth.login")
 }
 
 
-func (*AuthController) DoLogin(w http.ResponseWriter, r *http.Request) {
+func (*AuthController) DoLogin(c *gin.Context) {
       
-	  email := r.PostFormValue("email")
-	  password := r.PostFormValue("password")
+	  email := c.PostForm("email")
+	  password := c.PostForm("password")
   
-	  if err := auth.Attempt(email, password); err == nil {
-		  flash.Success("welcome back")
-		  http.Redirect(w, r, "/", http.StatusFound)
+	  if err := auth.Attempt(c,email, password); err == nil {
+		  flash.Success(c,"welcome back")
+          c.Redirect(http.StatusFound, "/")
 	  } else {
-		  view.RenderSimple(w, view.D{
+		  view.RenderSimple(c, view.D{
 			  "Error":    err.Error(),
 			  "Email":    email,
 			  "Password": password,
@@ -82,8 +84,8 @@ func (*AuthController) DoLogin(w http.ResponseWriter, r *http.Request) {
 	  }
 }
 
-func (*AuthController) Logout(w http.ResponseWriter, r *http.Request) {
-    auth.Logout()
-	flash.Success("logged out")
-    http.Redirect(w, r, "/", http.StatusFound)
+func (*AuthController) Logout(c *gin.Context) {
+    auth.Logout(c)
+	flash.Success(c,"logged out")
+    c.Redirect(http.StatusFound, "/")
 }

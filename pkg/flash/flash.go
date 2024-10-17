@@ -1,8 +1,10 @@
 package flash
 
 import (
-    "encoding/gob"
-    "github.com/Cynthia/goblog/pkg/session"
+	"encoding/gob"
+
+	"github.com/Cynthia/goblog/pkg/session"
+	"github.com/gin-gonic/gin"
 )
 
 
@@ -18,41 +20,41 @@ func init() {
 }
 
 
-func Info(message string) {
-    addFlash("info", message)
+func Info(c *gin.Context,message string) {
+    addFlash(c,"info", message)
 }
 
 
-func Warning(message string) {
-    addFlash("warning", message)
+func Warning(c *gin.Context,message string) {
+    addFlash(c,"warning", message)
 }
 
 
-func Success(message string) {
-    addFlash("success", message)
+func Success(c *gin.Context,message string) {
+    addFlash(c,"success", message)
 }
 
 
-func Danger(message string) {
-    addFlash("danger", message)
+func Danger(c *gin.Context,message string) {
+    addFlash(c,"danger", message)
 }
 
 
-func All() Flashes {
-    val := session.Get(flashKey)
+func All(c *gin.Context) Flashes {
+    val := session.Get(c,flashKey)
     
     flashMessages, ok := val.(Flashes)
     if !ok {
         return nil
     }
     
-    session.Forget(flashKey)
+    session.Forget(c,flashKey)
     return flashMessages
 }
 
-func addFlash(key string, message string) {
+func addFlash(c *gin.Context,key string, message string) {
     flashes := Flashes{}
     flashes[key] = message
-    session.Put(flashKey, flashes)
-    session.Save()
+    session.Put(c,flashKey, flashes)
+    session.Save(c)
 }

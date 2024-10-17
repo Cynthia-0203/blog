@@ -3,6 +3,7 @@ package category
 import (
 	"github.com/Cynthia/goblog/pkg/logger"
 	"github.com/Cynthia/goblog/pkg/model"
+
 	// "github.com/Cynthia/goblog/pkg/route"
 	"github.com/Cynthia/goblog/pkg/types"
 )
@@ -13,7 +14,6 @@ func (category *Category) Create() (err error) {
         logger.LogError(err)
         return err
     }
-
     return nil
 }
 

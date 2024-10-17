@@ -1,17 +1,11 @@
 package middlewares
 
 import (
-	"net/http"
-
 	"github.com/Cynthia/goblog/pkg/session"
+	"github.com/gin-gonic/gin"
 )
 
 
-func StartSession(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-       
-        session.StartSession(w, r)
-        next.ServeHTTP(w, r)
-    })
+func StartSession() gin.HandlerFunc {
+    return session.SetupSessionMiddleware("gblog")
 }

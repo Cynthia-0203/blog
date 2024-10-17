@@ -2,7 +2,6 @@ package view
 
 import (
 	"html/template"
-	"io"
 	"path/filepath"
 	"strings"
 
@@ -12,26 +11,28 @@ import (
 	"github.com/Cynthia/goblog/pkg/flash"
 	"github.com/Cynthia/goblog/pkg/logger"
 	"github.com/Cynthia/goblog/pkg/route"
+
+	"github.com/gin-gonic/gin"
 )
 
 
 type D map[string]interface{}
 
 
-func Render(w io.Writer, data D, tplFiles ...string) {
-    RenderTemplate(w, "app", data, tplFiles...)
+func Render(c *gin.Context, data D, tplFiles ...string) {
+    RenderTemplate(c, "app", data, tplFiles...)
 }
 
-func RenderSimple(w io.Writer, data D, tplFiles ...string) {
-    RenderTemplate(w, "simple", data, tplFiles...)
+func RenderSimple(c *gin.Context, data D, tplFiles ...string) {
+    RenderTemplate(c, "simple", data, tplFiles...)
 }
 
 
-func RenderTemplate(w io.Writer, name string, data D, tplFiles ...string) {
+func RenderTemplate(c *gin.Context, name string, data D, tplFiles ...string) {
 
     
-    data["isLogined"] = auth.Check()
-    data["flash"] = flash.All()
+    data["isLogined"] = auth.Check(c)
+    data["flash"] = flash.All(c)
     data["Users"], _ = user.All()
 	data["Categories"], _ = category.All()
 
@@ -44,7 +45,7 @@ func RenderTemplate(w io.Writer, name string, data D, tplFiles ...string) {
         }).ParseFiles(allFiles...)
     logger.LogError(err)
 
-    err = tmpl.ExecuteTemplate(w, name, data)
+    err = tmpl.ExecuteTemplate(c.Writer, name, data)
     logger.LogError(err)
 }
 

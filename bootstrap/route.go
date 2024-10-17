@@ -1,17 +1,16 @@
 package bootstrap
 
 import (
-	"github.com/Cynthia/goblog/pkg/route"
+	"github.com/Cynthia/goblog/pkg/session"
 	"github.com/Cynthia/goblog/routes"
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
-
-func SetupRoute() *mux.Router {
-    router := mux.NewRouter()
+func SetupRoute() *gin.Engine {
+    router := gin.Default()
+    router.Use(session.SetupSessionMiddleware("gblog"))
     routes.RegisterWebRoutes(router)
-
-    route.SetRoute(router)
-
     return router
 }
+
+

@@ -12,7 +12,6 @@ func (user *User) Create() (err error) {
         logger.LogError(err)
         return err
     }
-
     return nil
 }
 

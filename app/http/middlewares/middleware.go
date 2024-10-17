@@ -1,5 +1,7 @@
 package middlewares
 
-import "net/http"
+import (
+	"github.com/gin-gonic/gin"
+)
 
-type HttpHandlerFunc func(http.ResponseWriter, *http.Request)
+type HttpHandlerFunc func(*gin.Context)

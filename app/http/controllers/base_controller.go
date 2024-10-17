@@ -1,12 +1,11 @@
 package controllers
 
 import (
-    "fmt"
-    "github.com/Cynthia/goblog/pkg/flash"
-    "github.com/Cynthia/goblog/pkg/logger"
-    "net/http"
-
-    "gorm.io/gorm"
+	"net/http"
+	"github.com/Cynthia/goblog/pkg/flash"
+	"github.com/Cynthia/goblog/pkg/logger"
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 
@@ -14,18 +13,18 @@ type BaseController struct {
 }
 
 
-func (bc BaseController) ResponseForSQLError(w http.ResponseWriter, err error) {
+func (bc BaseController) ResponseForSQLError(c *gin.Context, err error) {
     if err == gorm.ErrRecordNotFound {
-        w.WriteHeader(http.StatusNotFound)
-        fmt.Fprint(w, "404 falied to find article...")
+        c.Writer.WriteHeader(http.StatusNotFound)
+        c.String(http.StatusNotFound, "404 未找到文章...")
     } else {
         logger.LogError(err)
-        w.WriteHeader(http.StatusInternalServerError)
-        fmt.Fprint(w, "500 server internal error...")
+        c.Writer.WriteHeader(http.StatusInternalServerError)
+        c.String(http.StatusInternalServerError, "500 服务器内部错误...")
     }
 }
 
-func (bc BaseController) ResponseForUnauthorized(w http.ResponseWriter, r *http.Request) {
-    flash.Warning("unauthorized operation!")
-    http.Redirect(w, r, "/", http.StatusFound)
+func (bc BaseController) ResponseForUnauthorized(c *gin.Context) {
+    flash.Warning(c,"unauthorized operation!")
+    c.Redirect(http.StatusFound, "/")
 }

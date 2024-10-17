@@ -2,13 +2,15 @@ package auth
 
 import (
 	"errors"
+
 	"github.com/Cynthia/goblog/app/models/user"
 	"github.com/Cynthia/goblog/pkg/session"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-func _getUID() string {
-    _uid := session.Get("uid")
+func _getUID(c *gin.Context) string {
+    _uid := session.Get(c,"uid")
     uid, ok := _uid.(string)
     if ok && len(uid) > 0 {
         return uid
@@ -17,8 +19,8 @@ func _getUID() string {
 }
 
 
-func User() user.User {
-    uid := _getUID()
+func User(c *gin.Context) user.User {
+    uid := _getUID(c)
     if len(uid) > 0 {
         _user, err := user.Get(uid)
         if err == nil {
@@ -28,7 +30,7 @@ func User() user.User {
     return user.User{}
 }
 
-func Attempt(email string, password string) error {
+func Attempt(c *gin.Context,email string, password string) error {
     
     _user, err := user.GetByEmail(email)
 
@@ -47,22 +49,22 @@ func Attempt(email string, password string) error {
     }
 
     
-    session.Put("uid", _user.GetStringID())
+    session.Put(c,"uid", _user.GetStringID())
 
     return nil
 }
 
 
-func Login(_user user.User) {
-    session.Put("uid", _user.GetStringID())
+func Login(c *gin.Context,_user user.User) {
+    session.Put(c,"uid", _user.GetStringID())
 }
 
 
-func Logout() {
-    session.Forget("uid")
+func Logout(c *gin.Context) {
+    session.Forget(c,"uid")
 }
 
 
-func Check() bool {
-    return len(_getUID()) > 0
+func Check(c *gin.Context) bool {
+    return len(_getUID(c)) > 0
 }

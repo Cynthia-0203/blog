@@ -10,23 +10,23 @@ import (
 	"github.com/Cynthia/goblog/pkg/flash"
 	"github.com/Cynthia/goblog/pkg/route"
 	"github.com/Cynthia/goblog/pkg/view"
+	"github.com/gin-gonic/gin"
 )
-
 
 type CategoriesController struct {
     BaseController
 }
 
 
-func (*CategoriesController) Create(w http.ResponseWriter, r *http.Request) {
-    view.Render(w, view.D{}, "categories.create")
+func (*CategoriesController) Create(c *gin.Context) {
+    view.Render(c, view.D{}, "categories.create")
 }
 
 
-func (*CategoriesController) Store(w http.ResponseWriter, r *http.Request) {
+func (*CategoriesController) Store(c *gin.Context) {
 
     _category := category.Category{
-        Name: r.PostFormValue("name"),
+        Name: c.PostForm("name"),
     }
 
    
@@ -36,15 +36,15 @@ func (*CategoriesController) Store(w http.ResponseWriter, r *http.Request) {
        
         _category.Create()
         if _category.ID > 0 {
-			flash.Success("分类创建成功")
-            indexURL := route.Name2URL("categories.show", "id", _category.GetStringID())
-            http.Redirect(w, r, indexURL, http.StatusFound)
+			flash.Success(c,"分类创建成功")
+            index:=route.Name2URL("categories.show", "id", _category.GetStringID())
+            fmt.Println(index)
+            c.Redirect(http.StatusFound, index)
         } else {
-            w.WriteHeader(http.StatusInternalServerError)
-            fmt.Fprint(w, "创建文章分类失败，请联系管理员")
+            c.String(http.StatusInternalServerError, "创建文章分类失败，请联系管理员")
         }
     } else {
-        view.Render(w, view.D{
+        view.Render(c, view.D{
             "Category": _category,
             "Errors":   errors,
         }, "categories.create")
@@ -52,24 +52,22 @@ func (*CategoriesController) Store(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func (cc *CategoriesController) Show(w http.ResponseWriter, r *http.Request) {
+func (cc *CategoriesController) Show(c *gin.Context) {
       
-    id := route.GetRouteVariable("id", r)
-
-      
+    id := c.Param("id")
+    fmt.Println(id)
+    
     _category, err := category.Get(id)
     if err!=nil{
         return
     }
     
-    articles, pagerData, err := article.GetByCategoryID(_category.GetStringID(), r, 2)
+    articles, pagerData, err := article.GetByCategoryID(_category.GetStringID(), c, 2)
   
     if err != nil {
-        cc.ResponseForSQLError(w, err)
+        cc.ResponseForSQLError(c, err)
     } else {
-  
-    
-        view.Render(w, view.D{
+        view.Render(c, view.D{
             "Articles":  articles,
             "PagerData": pagerData,
         }, "articles.index", "articles._article_meta")

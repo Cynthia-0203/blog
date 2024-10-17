@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/Cynthia/goblog/app/models/article"
@@ -10,6 +9,7 @@ import (
 	"github.com/Cynthia/goblog/pkg/auth"
 	"github.com/Cynthia/goblog/pkg/route"
 	"github.com/Cynthia/goblog/pkg/view"
+	"github.com/gin-gonic/gin"
 )
 
 
@@ -17,33 +17,29 @@ type ArticlesController struct {
     BaseController
 }
 
-func (ac *ArticlesController) Show(w http.ResponseWriter, r *http.Request) {
-
- 
-    id := route.GetRouteVariable("id", r)
+func (ac *ArticlesController) Show(c *gin.Context) {
+    id := c.Param("id")
     article, err := article.Get(id)
     if err != nil {
-        ac.ResponseForSQLError(w, err)
+        ac.ResponseForSQLError(c, err)
     } else {
         
-        view.Render(w, view.D{
+        view.Render(c, view.D{
             "Article":          article,
-            "CanModifyArticle": policies.CanModifyArticle(article),
+            "CanModifyArticle": policies.CanModifyArticle(c,article),
         }, "articles.show", "articles._article_meta")
     }
 }
 
-func (ac *ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
+func (ac *ArticlesController) Index(c *gin.Context) {
 
     
-    articles, pagerData,err := article.GetAll(r,2)
+    articles, pagerData,err := article.GetAll(c,2)
 
     if err != nil {
-        ac.ResponseForSQLError(w, err)
+        ac.ResponseForSQLError(c, err)
     } else {
-
-       
-        view.Render(w, view.D{
+        view.Render(c, view.D{
             "Articles":  articles,
             "PagerData": pagerData,
         }, "articles.index", "articles._article_meta")
@@ -51,17 +47,17 @@ func (ac *ArticlesController) Index(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func (*ArticlesController) Create(w http.ResponseWriter, r *http.Request) {
-    view.Render(w, view.D{}, "articles.create", "articles._form_field")
+func (*ArticlesController) Create(c *gin.Context) {
+    view.Render(c, view.D{}, "articles.create", "articles._form_field")
 }
 
 
-func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
+func (*ArticlesController) Store(c *gin.Context) {
     
-    currentUser := auth.User()
+    currentUser := auth.User(c)
     _article := article.Article{
-        Title:  r.PostFormValue("title"),
-        Body:   r.PostFormValue("body"),
+        Title:  c.PostForm("title"),
+        Body:   c.PostForm("body"),
         UserID: currentUser.ID,
     }
 
@@ -70,14 +66,13 @@ func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
     if len(errors) == 0 {
         _article.Create()
         if _article.ID > 0 {
-            indexURL := route.Name2URL("articles.show", "id", _article.GetStringID())
-            http.Redirect(w, r, indexURL, http.StatusFound)
+            index:=route.Name2URL("articles.show", "id", _article.GetStringID())
+            c.Redirect(http.StatusFound, index)
         } else {
-            w.WriteHeader(http.StatusInternalServerError)
-            fmt.Fprint(w, "failed to create article...")
+            c.String(http.StatusInternalServerError, "failed to create article...")
         }
     } else {
-        view.Render(w, view.D{
+        view.Render(c, view.D{
             "Article": _article,
             "Errors":  errors,
         }, "articles.create", "articles._form_field")
@@ -85,19 +80,17 @@ func (*ArticlesController) Store(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func (ac *ArticlesController) Edit(w http.ResponseWriter, r *http.Request) {
-
-    
-    id := route.GetRouteVariable("id", r)
+func (ac *ArticlesController) Edit(c *gin.Context) {
+    id := c.Param("id")
     _article, err := article.Get(id)
     if err != nil {
-        ac.ResponseForSQLError(w, err)
+        ac.ResponseForSQLError(c, err)
     } else {
 
-        if !policies.CanModifyArticle(_article) {
-            ac.ResponseForUnauthorized(w, r)
+        if !policies.CanModifyArticle(c,_article) {
+            ac.ResponseForUnauthorized(c)
         } else {
-            view.Render(w, view.D{
+            view.Render(c, view.D{
                 "Article": _article,
                 "Errors":  view.D{},
             }, "articles.edit", "articles._form_field")
@@ -106,72 +99,66 @@ func (ac *ArticlesController) Edit(w http.ResponseWriter, r *http.Request) {
 }
 
 
-func (ac *ArticlesController) Update(w http.ResponseWriter, r *http.Request) {
+func (ac *ArticlesController) Update(c *gin.Context) {
 
-    id := route.GetRouteVariable("id", r)
+    id := c.Param("id")
     _article, err := article.Get(id)
     if err != nil {
-        ac.ResponseForSQLError(w, err)
+        ac.ResponseForSQLError(c, err)
+    } 
+    if !policies.CanModifyArticle(c,_article) {
+        ac.ResponseForUnauthorized(c)
     } else {
-        if !policies.CanModifyArticle(_article) {
-            ac.ResponseForUnauthorized(w, r)
-        } else {
 
-            _article.Title = r.PostFormValue("title")
-            _article.Body = r.PostFormValue("body")
+        _article.Title = c.PostForm("title")
+        _article.Body = c.PostForm("body")
 
-            errors := requests.ValidateArticleForm(_article)
 
-            if len(errors) == 0 {
+        errors := requests.ValidateArticleForm(_article)
 
-                rowsAffected, err := _article.Update()
-                if err != nil {
-                    
-                    w.WriteHeader(http.StatusInternalServerError)
-                    fmt.Fprint(w, "500 sever internal error")
-                    return
-                }
+        if len(errors) == 0 {
 
-                if rowsAffected > 0 {
-                    showURL := route.Name2URL("articles.show", "id", id)
-                    http.Redirect(w, r, showURL, http.StatusFound)
-                } else {
-                    fmt.Fprint(w, "no change!")
-                }
-            } else {
-                view.Render(w, view.D{
-                    "Article": _article,
-                    "Errors":  errors,
-                }, "articles.edit", "articles._form_field")
+            rowsAffected, err := _article.Update()
+            if err != nil {
+                c.String(http.StatusInternalServerError, "500 server internal error")
+                return
             }
+
+            if rowsAffected > 0 {
+                index:=route.Name2URL("articles.show", "id", _article.GetStringID())
+                c.Redirect(http.StatusFound, index)
+            } else {
+                c.String(http.StatusOK, "no change!")
+            }
+        } else {
+            view.Render(c, view.D{
+                "Article": _article,
+                "Errors":  errors,
+            }, "articles.edit", "articles._form_field")
         }
+        
     }
 }
 
-func (ac *ArticlesController) Delete(w http.ResponseWriter, r *http.Request) {
+func (ac *ArticlesController) Delete(c *gin.Context) {
 
-    id := route.GetRouteVariable("id", r)
+    id := c.Param("id")
     _article, err := article.Get(id)
     if err != nil {
-        ac.ResponseForSQLError(w, err)
+        ac.ResponseForSQLError(c, err)
     } else {
-        if !policies.CanModifyArticle(_article) {
-            ac.ResponseForUnauthorized(w, r)
+        if !policies.CanModifyArticle(c,_article) {
+            ac.ResponseForUnauthorized(c)
         } else {
             
             rowsAffected, err := _article.Delete()
             if err != nil {
-                w.WriteHeader(http.StatusInternalServerError)
-                fmt.Fprint(w, "500 server internal error...")
+                c.String(http.StatusInternalServerError, "500 server internal error...")
             } else {
-               
                 if rowsAffected > 0 {
-                    indexURL := route.Name2URL("articles.index")
-                    http.Redirect(w, r, indexURL, http.StatusFound)
+                    c.Redirect(http.StatusFound, "/articles/index")
                 } else {
-    
-                    w.WriteHeader(http.StatusNotFound)
-                    fmt.Fprint(w, "404 not find article...")
+                    c.String(http.StatusNotFound, "404 not find article...")
                 }
             }
         }

@@ -1,13 +1,12 @@
 package controllers
 
 import (
-    "fmt"
-    "github.com/Cynthia/goblog/app/models/article"
-    "github.com/Cynthia/goblog/app/models/user"
-    "github.com/Cynthia/goblog/pkg/logger"
-    "github.com/Cynthia/goblog/pkg/route"
-    "github.com/Cynthia/goblog/pkg/view"
-    "net/http"
+	"net/http"
+	"github.com/Cynthia/goblog/app/models/article"
+	"github.com/Cynthia/goblog/app/models/user"
+	"github.com/Cynthia/goblog/pkg/logger"
+	"github.com/Cynthia/goblog/pkg/view"
+	"github.com/gin-gonic/gin"
 )
 
 
@@ -16,24 +15,21 @@ type UserController struct {
 }
 
 
-func (uc *UserController) Show(w http.ResponseWriter, r *http.Request) {
+func (uc *UserController) Show(c *gin.Context) {
 
-
-    id := route.GetRouteVariable("id", r)
+    id := c.Param("id")
     _user, err := user.Get(id)
 
     
     if err != nil {
-        uc.ResponseForSQLError(w, err)
+        uc.ResponseForSQLError(c, err)
     } else {
-         
         articles, err := article.GetByUserID(_user.GetStringID())
         if err != nil {
             logger.LogError(err)
-            w.WriteHeader(http.StatusInternalServerError)
-            fmt.Fprint(w, "500 server internal error...")
+            c.String(http.StatusInternalServerError, "500 server internal error...")
         } else {
-            view.Render(w, view.D{
+            view.Render(c, view.D{
                 "Articles": articles,
             }, "articles.index", "articles._article_meta")
         }

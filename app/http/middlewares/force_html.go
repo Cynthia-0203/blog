@@ -1,12 +1,14 @@
 package middlewares
 
-import "net/http"
+import (
+	"github.com/gin-gonic/gin"
+)
 
 
-func ForceHTML(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-       
-        w.Header().Set("Content-Type", "text/html; charset=utf-8")
-        next.ServeHTTP(w, r)
-    })
+func ForceHTML() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        // 设置 Content-Type 为 text/html
+        c.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+        c.Next()
+    }
 }

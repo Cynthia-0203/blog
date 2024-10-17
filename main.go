@@ -1,11 +1,9 @@
 package main
 
 import (
-    "github.com/Cynthia/goblog/app/http/middlewares"
     "github.com/Cynthia/goblog/bootstrap"
     "github.com/Cynthia/goblog/config"
     c "github.com/Cynthia/goblog/pkg/config"
-    "net/http"
 )
 
 func init() {
@@ -20,5 +18,5 @@ func main() {
     // 初始化路由绑定
     router := bootstrap.SetupRoute()
 
-    http.ListenAndServe(":"+c.GetString("app.port"), middlewares.RemoveTrailingSlash(router))
+    router.Run(":" + c.GetString("app.port"))
 }

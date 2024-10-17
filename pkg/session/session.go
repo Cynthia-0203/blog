@@ -1,54 +1,47 @@
 package session
 
 import (
-	"net/http"
-
-	"github.com/Cynthia/goblog/pkg/config"
-	"github.com/Cynthia/goblog/pkg/logger"
-	"github.com/gorilla/sessions"
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
+	"github.com/gin-gonic/gin"
 )
 
-// Store gorilla sessions 的存储库
-var Store = sessions.NewCookieStore([]byte(config.GetString("app.key")))
+var sessionKey = "session_name"
 
-
-var Session *sessions.Session
-var Request *http.Request
-var Response http.ResponseWriter
-
-
-func StartSession(w http.ResponseWriter, r *http.Request) {
-    var err error
-
-    Session, err = Store.Get(r, config.GetString("session.session_name"))
-    logger.LogError(err)
-
-    Request = r
-    Response = w
+// SetupSessionMiddleware 设置 Gin 的 Session 中间件
+func SetupSessionMiddleware(secret string) gin.HandlerFunc {
+	// 使用 CookieStore 作为会话存储方式
+	store := cookie.NewStore([]byte(secret))
+	return sessions.Sessions(sessionKey, store)
 }
 
-
-func Put(key string, value interface{}) {
-    Session.Values[key] = value
-    Save()
+// Put 将键值对存入会话
+func Put(c *gin.Context, key string, value interface{}) {
+	session := sessions.Default(c)
+	session.Set(key, value)
+	session.Save()
 }
 
-func Get(key string) interface{} {
-    return Session.Values[key]
+// Get 从会话中获取值
+func Get(c *gin.Context, key string) interface{} {
+	session := sessions.Default(c)
+	return session.Get(key)
 }
 
-
-func Forget(key string) {
-    delete(Session.Values, key)
-    Save()
+// Forget 从会话中删除键
+func Forget(c *gin.Context, key string) {
+	session := sessions.Default(c)
+	session.Delete(key)
+	session.Save()
 }
 
-func Flush() {
-    Session.Options.MaxAge = -1
-    Save()
+func Save(c *gin.Context){
+	session := sessions.Default(c)
+	session.Save()
 }
-
-func Save() {
-    err := Session.Save(Request, Response)
-    logger.LogError(err)
+// Flush 清空会话
+func Flush(c *gin.Context) {
+	session := sessions.Default(c)
+	session.Clear()
+	session.Save()
 }

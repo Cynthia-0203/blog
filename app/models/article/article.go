@@ -2,8 +2,9 @@ package article
 
 import (
 	"strconv"
-	"github.com/Cynthia/goblog/app/models/user"
+
 	"github.com/Cynthia/goblog/app/models"
+	"github.com/Cynthia/goblog/app/models/user"
 	"github.com/Cynthia/goblog/pkg/route"
 )
 
@@ -14,7 +15,7 @@ type Article struct {
     User   user.User
     Title string `gorm:"type:varchar(255);not null;" valid:"title"`
     Body  string `gorm:"type:longtext;not null;" valid:"body"`
-	CategoryID uint64 `gorm:"not null;default:4;index"`
+	CategoryID uint64 `gorm:"not null;index"`
 }
 
 
